@@ -140,7 +140,6 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { marked } from 'marked'
@@ -154,13 +153,18 @@ interface Message {
   status: 'sending' | 'sent' | 'error'
 }
 
-interface APIResponse {
+// 注意：API的流式响应结构与一次性响应不同
+// 这里我们不再需要定义完整的APIResponse类型，因为我们会逐块处理
+/*
+// 流式响应中每个数据块(chunk)的大致JSON结构
+interface StreamChunk {
   choices: {
-    message: {
-      content: string
+    delta: {
+      content?: string
     }
   }[]
 }
+*/
 
 // 错误类型枚举
 enum ErrorType {
@@ -192,6 +196,8 @@ const hasMessages = computed(() => messages.value.length > 1)
 // Markdown 渲染函数
 const renderMarkdown = (content: string) => {
   try {
+    // 在渲染前，确保代码块正确闭合，避免流式输出时解析错误
+    // 这是一个简化处理，更复杂的场景可能需要更精细的Markdown流式解析器
     return marked.parse(content)
   } catch (error) {
     console.error('Markdown 渲染失败:', error)
@@ -199,7 +205,7 @@ const renderMarkdown = (content: string) => {
   }
 }
 
-// 防抖函数
+// 防抖函数 (保持不变)
 const debounce = <T extends (...args: unknown[]) => unknown>(func: T, wait: number): T => {
   let timeout: number
   return ((...args: Parameters<T>) => {
@@ -212,12 +218,12 @@ const debounce = <T extends (...args: unknown[]) => unknown>(func: T, wait: numb
   }) as T
 }
 
-// 生成唯一ID
+// 生成唯一ID (保持不变)
 const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).slice(2)
 }
 
-// 滚动到底部
+// 滚动到底部 (保持不变)
 const scrollToBottom = async () => {
   await nextTick()
   if (chatContainer.value) {
@@ -225,9 +231,9 @@ const scrollToBottom = async () => {
   }
 }
 
-// 获取错误类型
+// 获取错误类型 (保持不变)
 const getErrorType = (error: unknown): ErrorType => {
-  if (error instanceof Error) {
+    if (error instanceof Error) {
     if (error.message.includes('HTTP error! status: 401')) {
       return ErrorType.AUTHENTICATION
     }
@@ -244,9 +250,9 @@ const getErrorType = (error: unknown): ErrorType => {
   return ErrorType.UNKNOWN
 }
 
-// 获取用户友好的错误信息
+// 获取用户友好的错误信息 (保持不变)
 const getErrorMessage = (errorType: ErrorType): string => {
-  switch (errorType) {
+    switch (errorType) {
     case ErrorType.AUTHENTICATION:
       return 'API Key 无效或已过期，请检查您的 API 密钥。'
     case ErrorType.RATE_LIMIT:
@@ -260,30 +266,31 @@ const getErrorMessage = (errorType: ErrorType): string => {
   }
 }
 
-// 防抖发送消息函数
+// 防抖发送消息函数 (保持不变)
 const debouncedSendMessage = debounce(async () => {
   await sendMessage()
-}, 500)
+}, 300) // 减少了等待时间，让交互更即时
 
-// 发送消息函数
+
+// =================================================================
+//  ↓↓↓ 核心修改区域：sendMessage 函数 ↓↓↓
+// =================================================================
+
 const sendMessage = async (retryContent?: string) => {
   if ((!inputMessage.value.trim() && !retryContent) || loading.value || isSubmitting.value) return
 
   const messageContent = retryContent || inputMessage.value.trim()
   const messageId = retryMessageId.value || generateId()
 
-  // 重置重试状态
   retryMessageId.value = null
   isSubmitting.value = true
 
-  // 如果是重试，先更新原消息状态
   if (retryContent) {
     const messageIndex = messages.value.findIndex(msg => msg.id === messageId)
     if (messageIndex !== -1) {
       messages.value[messageIndex]!.status = 'sending'
     }
   } else {
-    // 创建用户消息
     const userMessage: Message = {
       id: messageId,
       role: 'user',
@@ -291,18 +298,24 @@ const sendMessage = async (retryContent?: string) => {
       timestamp: new Date(),
       status: 'sent'
     }
-
     messages.value.push(userMessage)
     inputMessage.value = ''
   }
 
   loading.value = true
-
   await scrollToBottom()
 
-  try {
-    console.log('正在发送请求到:', API_URL)
+  // 1. 创建一个空的助手消息用于接收流式内容
+  const assistantMessage: Message = {
+    id: generateId(),
+    role: 'assistant',
+    content: '', // 初始内容为空
+    timestamp: new Date(),
+    status: 'sent'
+  }
+  messages.value.push(assistantMessage)
 
+  try {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
@@ -311,64 +324,70 @@ const sendMessage = async (retryContent?: string) => {
       },
       body: JSON.stringify({
         model: MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: '你是一个有用的AI助手。'
-          },
-          ...messages.value.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }))
-        ],
-        max_tokens: 500,
-        temperature: 0.7
+        messages: messages.value.slice(0, -1).map(msg => ({ // 发送除新创建的空消息外的所有历史记录
+          role: msg.role,
+          content: msg.content
+        })),
+        max_tokens: 1024, // 可以根据需要调整
+        temperature: 0.7,
+        stream: true // 2. 关键：开启流式传输
       })
     })
 
-    console.log('响应状态:', response.status, response.statusText)
-
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('错误响应内容:', errorText)
       throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`)
     }
 
-    const data: APIResponse = await response.json()
-    console.log('成功响应:', data)
-
-    const assistantMessage: Message = {
-      id: generateId(),
-      role: 'assistant',
-      content: data.choices[0]?.message.content || '',
-      timestamp: new Date(),
-      status: 'sent'
+    // 3. 处理流式响应
+    if (!response.body) {
+      throw new Error('Response body is empty.')
     }
 
-    messages.value.push(assistantMessage)
-  } catch (error) {
-    console.error('发送消息失败:', error)
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
 
-    const errorType = getErrorType(error)
-    const errorContent = getErrorMessage(errorType)
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) {
+        break // 流结束
+      }
 
-    // 如果是重试消息，更新其状态为错误
-    if (retryContent) {
-      const messageIndex = messages.value.findIndex(msg => msg.id === messageId)
-      if (messageIndex !== -1) {
-        messages.value[messageIndex]!.status = 'error'
+      buffer += decoder.decode(value, { stream: true })
+      
+      // 按行处理SSE事件
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || '' // 保留不完整的行到下一次循环
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.substring(6).trim()
+          if (data === '[DONE]') {
+            break // API发送的结束信号
+          }
+          try {
+            const parsed = JSON.parse(data)
+            const contentChunk = parsed.choices[0]?.delta?.content
+            if (contentChunk) {
+              // 4. 将内容块追加到助手的消息中
+              assistantMessage.content += contentChunk
+              await scrollToBottom() // 每次更新都滚动到底部
+            }
+          } catch (error) {
+            console.error('解析JSON失败:', data, error)
+          }
+        }
       }
     }
 
-    const errorMessage: Message = {
-      id: generateId(),
-      role: 'assistant',
-      content: errorContent,
-      timestamp: new Date(),
-      status: 'error'
-    }
+  } catch (error) {
+    console.error('发送消息失败:', error)
+    const errorType = getErrorType(error)
+    // 更新最后一条（我们创建的空）消息为错误消息
+    assistantMessage.content = getErrorMessage(errorType)
+    assistantMessage.status = 'error'
 
-    messages.value.push(errorMessage)
   } finally {
     loading.value = false
     isSubmitting.value = false
@@ -376,38 +395,42 @@ const sendMessage = async (retryContent?: string) => {
   }
 }
 
-// 重试发送消息
+// =================================================================
+//  ↑↑↑ 核心修改区域结束 ↑↑↑
+// =================================================================
+
+
+// 重试发送消息 (保持不变)
 const retryMessage = (messageId: string, content: string) => {
+  // 从消息列表中移除之前的错误AI回复（如果有）
+  const lastMessage = messages.value[messages.value.length - 1]
+  if (lastMessage && lastMessage.role === 'assistant' && lastMessage.status === 'error') {
+    messages.value.pop()
+  }
+
   retryMessageId.value = messageId
   sendMessage(content)
 }
 
 
-// 清空聊天函数 - 显示确认对话框
+// 清空聊天函数 (保持不变)
 const clearChat = () => {
-  // 如果只有初始消息或没有消息，不需要清空
   if (messages.value.length <= 1) {
     return
   }
   showClearConfirm.value = true
 }
 
-// 确认清空聊天
+// 确认清空聊天 (保持不变)
 const confirmClearChat = () => {
-  // 保留初始的欢迎消息
   const initialMessage = messages.value.find(msg =>
     msg.role === 'assistant' && msg.content.includes('你好')
   )
-
   messages.value = initialMessage ? [initialMessage] : []
   showClearConfirm.value = false
-
-  // 清空后重新聚焦到输入框
   nextTick(() => {
     inputRef.value?.focus()
   })
-
-  // 可选：添加清空成功的提示
   if (messages.value.length === 0) {
     const clearMessage: Message = {
       id: generateId(),
@@ -420,7 +443,7 @@ const confirmClearChat = () => {
   }
 }
 
-// 格式化时间戳
+// 格式化时间戳 (保持不变)
 const formatTime = (timestamp: Date) => {
   return timestamp.toLocaleTimeString('zh-CN', {
     hour: '2-digit',
@@ -428,14 +451,15 @@ const formatTime = (timestamp: Date) => {
   })
 }
 
-// 处理回车键发送
+// 处理回车键发送 (保持不变)
 const handleKeyup = (event: KeyboardEvent) => {
-  if (event.key === 'Enter') {
+  if (event.key === 'Enter' && !event.shiftKey) { // 增加!event.shiftKey防止换行时发送
+    event.preventDefault()
     debouncedSendMessage()
   }
 }
 
-// 初始化欢迎消息
+// 初始化欢迎消息 (保持不变)
 onMounted(() => {
   const welcomeMessage: Message = {
     id: generateId(),

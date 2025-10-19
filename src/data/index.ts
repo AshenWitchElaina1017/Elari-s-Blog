@@ -40,7 +40,7 @@ const AnimeDates: AnimeArticle[] = [
         cardType: "anime",
         id: 5,
         title: "进击的巨人",
-        img: "https://picsum.photos/seed/anime5/400/600",
+        img: "https://picgo-elaina.oss-cn-chengdu.aliyuncs.com/majotabi/202510061605261.png",
         content: "一部被认为是近年日本动画代表作之一的史诗级作品，在全球范围内获得了极高的评价。 故事最初描绘了人类为了生存对抗神秘巨人，但逐渐揭示了一个充满政治阴谋、种族冲突和人性拷问的复杂世界。 动画以其一流的制作、悲壮的故事情节、激动人心的动作场面和令人震惊的真相揭露而备受赞誉。 动画的结局在漫画的基础上进行了一些修改，获得了压倒性的正面评价。"
     },
     // 动漫卡片 - 紫罗兰永恒花园
@@ -48,7 +48,7 @@ const AnimeDates: AnimeArticle[] = [
         cardType: "anime",
         id: 6,
         title: "紫罗兰永恒花园",
-        img: "https://picsum.photos/seed/anime6/400/600",
+        img: "https://picgo-elaina.oss-cn-chengdu.aliyuncs.com/majotabi/202510061605257.png",
         content: "京都动画出品的视觉盛宴，以其无懈可击的精美作画和动人配乐而闻名。 故事讲述了在战争中作为“武器”长大的少女薇尔莉特，在战后成为“自动手记人偶”（代笔人），通过为他人书写信件，逐渐理解“爱”为何物的旅程。 动画以单元剧的形式展开，每一集都讲述一个感人至深的故事，细腻地描绘了人类的各种情感，是一部能触动心灵的治愈之作。"
     },
     // 动漫卡片 - 魔女之旅
@@ -56,7 +56,7 @@ const AnimeDates: AnimeArticle[] = [
         cardType: "anime",
         id: 7,
         title: "魔女之旅",
-        img: "https://picsum.photos/seed/anime7/400/600",
+        img: "https://picgo-elaina.oss-cn-chengdu.aliyuncs.com/majotabi/202510061605254.jpg",
         content: "一部以旅行为主轴的单元剧动画，讲述了天才魔女伊蕾娜在游历各国的奇妙见闻。 动画风格多变，时而轻松愉快，时而又会转入探讨人性黑暗面的深刻故事，这种明暗交织的叙事方式是其最大特色。 尽管部分黑暗情节的快速转变引发了一些争议，但作品凭借其独特的旅行者视角、精致的画面和对主角伊蕾娜细腻的心理描绘，获得了很多观众的喜爱。"
     }
 ];
