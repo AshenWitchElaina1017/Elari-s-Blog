@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 确保背景图片容器有最小高度 */
+.bg-container {
+  min-height: 100vh;
+}

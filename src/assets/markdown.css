@@ -1,0 +1,206 @@
+/* Markdown 内容样式优化 - 使用原生 CSS 而非 Tailwind @apply */
+.markdown-content {
+  /* 链接样式 */
+}
+
+.markdown-content a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.markdown-content a:hover {
+  color: #1d4ed8;
+}
+
+/* 标题样式 */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  margin-top: 1rem;
+  color: inherit;
+}
+
+.markdown-content h1 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.markdown-content h2 {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.markdown-content h3 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/* 段落样式 */
+.markdown-content p {
+  margin-bottom: 0.5rem;
+  line-height: 1.625;
+  color: inherit;
+}
+
+/* 列表样式 */
+.markdown-content ul,
+.markdown-content ol {
+  margin-bottom: 0.5rem;
+  padding-left: 1rem;
+  color: inherit;
+}
+
+.markdown-content li {
+  margin-bottom: 0.25rem;
+  color: inherit;
+}
+
+/* 引用样式 */
+.markdown-content blockquote {
+  border-left: 4px solid #9ca3af;
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  font-style: italic;
+  color: inherit;
+}
+
+/* 代码样式 */
+.markdown-content code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  color: inherit;
+}
+
+/* 代码块样式 */
+.markdown-content pre {
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  overflow-x: auto;
+  color: inherit;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  font-size: 0.875rem;
+  color: inherit;
+}
+
+/* 表格样式 */
+.markdown-content table {
+  border-collapse: collapse;
+  border: 1px solid #d1d5db;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #d1d5db;
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  color: inherit;
+}
+
+.markdown-content th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+
+/* 水平分割线 */
+.markdown-content hr {
+  margin: 1rem 0;
+  border-color: #d1d5db;
+}
+
+/* 加粗和斜体 */
+.markdown-content strong {
+  font-weight: 700;
+  color: inherit;
+}
+
+.markdown-content em {
+  font-style: italic;
+  color: inherit;
+}
+
+/* 图片样式 */
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+/* 内联代码 */
+.markdown-content :not(pre) > code {
+  background-color: #e5e7eb;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  color: inherit;
+}
+
+/* 深色主题适配 */
+.dark .markdown-content a {
+  color: #60a5fa;
+}
+
+.dark .markdown-content a:hover {
+  color: #93c5fd;
+}
+
+.dark .markdown-content pre {
+  background-color: #1f2937;
+}
+
+.dark .markdown-content :not(pre) > code {
+  background-color: #374151;
+}
+
+.dark .markdown-content th {
+  background-color: #1f2937;
+}
+
+.dark .markdown-content blockquote {
+  border-left-color: #6b7280;
+}
+
+/* 确保代码高亮在深色主题下正常工作 */
+.hljs {
+  background: transparent !important;
+  color: inherit;
+}
+
+/* 额外的聊天界面样式优化 */
+.markdown-content {
+  /* 确保在聊天消息气泡中的样式 */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* 针对 inline 和 block 元素的特殊处理 */
+.markdown-content p:first-child {
+  margin-top: 0;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
